@@ -1,0 +1,254 @@
+package main;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+
+
+import javax.swing.JFileChooser;
+import javax.swing.UIManager;
+
+/**
+ * ORIGINALLY WRITTEN FOR PDF FILES, BUT WORKS FOR EVERY FILE TYPE !
+ * Explanation for usage:
+ * Export this sourcecode as runnable jar.
+ * Then go to windows command line into the folder containing this file.
+ * There you open the .jar file with:
+ * java -jar OutputManager.jar <dir-to-file> <filename.***>
+ * Then follow the dialogue and save the file with a correct ending.
+ * There you go.
+ * 
+ * @author Moritz Fesseler, November 2022
+ *
+ */
+
+
+public class PDFOutputManager {
+
+	public static void main(String[] args) {
+		PDFOutputManager.ObserveParameters(args);
+		String FILEPATH = args[0];
+		String FILENAME = args[1];
+		
+		try {
+			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		PDFOutputManager.START_MAIN_PROCESS(FILEPATH, FILENAME);
+		
+
+	}
+	
+	public static void START_MAIN_PROCESS(String FILEPATH, String FILENAME) {
+	    /* Starts the main process of our program. This program
+	       streams data from a given source to another destination
+
+	    Args:
+	        FILEPATH (String): The path to the file we want to handle
+	        FILENAME (String): The name of the file we want to handle
+
+	    Returns:
+	        --
+	    */
+		
+		
+		
+		String inputPath = PDFOutputManager.createInputPath(FILEPATH, FILENAME);
+		String fileEnding = PDFOutputManager.getFileEnding(inputPath);
+		File outputFile = PDFOutputManager.startFileChooserDialog(fileEnding, FILENAME);
+		PDFOutputManager.ReadAndWriteStream(inputPath, outputFile);
+	}
+
+	public static String getFileEnding(String FILENAME) {
+	    /*This method gets the file ending of a given FILENAME
+
+	    Args:
+	        FILENAME (String): Name of the file we want to handle
+
+	    Returns:
+	        The file ending of FILENAME
+	        (for example: "FILENAME = Test_one.pdf;" returns ".pdf")
+	    */
+	    
+		
+		
+		char[] filename_char = FILENAME.toCharArray();
+		String ending = "";
+
+		for(int i=FILENAME.length()-1; i>=FILENAME.length()-5; i--) {
+			if(filename_char[i] == '.') {
+				for(int j=i; j<FILENAME.length(); j++) {
+					ending += filename_char[j];
+				}
+				
+				return ending;
+			}
+
+
+		}
+		return "";
+	}
+	
+	public static String createInputPath(String FILEPATH, String FILENAME) {
+	    /*Combines FILEPATH and FILENAME to a correct input path
+
+	    Args:
+	        FILEPATH (String): path to the file
+	        FILENAME (String): name of the file
+
+	    Returns:
+	        Correct input path
+	    */
+
+		
+		String inputPath = PDFOutputManager.checkPath(FILEPATH);
+			
+		if(PDFOutputManager.FileEndingAvailable(FILENAME) == true) {		
+			inputPath += FILENAME;
+		}else {
+			inputPath += FILENAME + ".pdf";			
+		}
+		
+		return inputPath;
+	}
+	
+	public static boolean FileEndingAvailable(String FILENAME) {
+		/*Checks if file ending (.pdf, .jpng etc.) is available at 
+		the given path
+
+		Args:
+			FILENAME (String): name of the file we want to process
+
+		Returns:
+			True if file ending available, false if not
+		 */
+
+
+		char[] filename_char = FILENAME.toCharArray();
+		
+		
+		for(int i=FILENAME.length()-1; i>=FILENAME.length()-5; i--) {
+			if(filename_char[i] == '.') {
+				
+				return true;
+			}
+			
+			
+		}
+		
+		return false;
+	}
+	
+	public static void ObserveParameters(String[] args) {
+	    /*Checks if there are exactly 2 paramaters in the console.
+	       These params should represent FILEPATH and FILENAME.
+	       Quits with Code -1 if there are not 2 arguments
+
+	    Args:
+	        args (String[]): The arguments we give through the console
+
+	    Returns:
+	        ---
+	    */
+		
+		if(args.length != 2) {
+
+			//Not enough arguments
+			System.exit(-1);
+		}
+
+	}
+	
+	public static File startFileChooserDialog(String fileEnding, String FILENAME) {
+	    /*Creates the GUI-dialogue where the end user picks 
+	       a directory and saves his document.
+
+	    Args:
+	        fileEnding (_type_): The ending of the read file we want to transfer to the file we write later
+	        FILENAME (_type_): Name of the file we want to handle
+
+	    Returns:
+	        file (File): The actual file we want to save
+	    */
+		
+		
+		File file;
+		String path;
+		
+		
+		JFileChooser filechooser = new JFileChooser();
+		filechooser.setDialogTitle("Kopie speichern unter");
+		filechooser.setApproveButtonText("Speichern");
+		filechooser.setSelectedFile(new File(FILENAME));
+		filechooser.setVisible(true);
+		filechooser.showOpenDialog(null);
+		path = filechooser.getSelectedFile().getAbsolutePath();
+		file = new File(path);
+
+
+		return file;
+	}
+
+	public static void ReadAndWriteStream(String inputPath, File outputFile) {
+	    /*Here we start reading from the inputPath into a stream.
+	       We redirect the input stream into a output file.
+
+	    Args:
+	        inputPath (_type_): Path to the document we want to read from
+	        outputFile (_type_): File we want to write our input
+
+	    Returns:
+	        ---
+	   */
+		
+		File file_input = new File(inputPath);
+		
+		
+		try(FileOutputStream out = new FileOutputStream(outputFile);
+				FileInputStream in = new FileInputStream(file_input)){
+
+			byte[] byte_to_write = new byte[1000];
+			int len = 0;
+
+			while((len = in.read(byte_to_write)) != -1) {
+
+				out.write(byte_to_write, 0, len);
+
+
+			}
+
+
+		}catch(Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public static String checkPath(String FILEPATH) {
+	    /*Checks if there are '\' at the given path:
+	       if not, insert one to correct processing of our program.
+
+	    Args:
+	        FILEPATH (String): path to our file
+
+	    Returns:
+	        FILEPATH (String): Overwritten and corrected FILEPATH
+	    */
+		
+		char[] pathAsChar = FILEPATH.toCharArray();
+		int len = pathAsChar.length;
+		
+		
+		
+		if(pathAsChar[len-1] != '\\') {
+			FILEPATH += "\\";
+			return FILEPATH;
+		}
+		
+		return FILEPATH;
+		
+	}
+	
+	
+}
